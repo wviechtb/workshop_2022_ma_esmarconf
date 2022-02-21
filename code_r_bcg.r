@@ -80,6 +80,9 @@ with(dat, forest(yi, vi, slab=paste(author, year, sep=", "), header=TRUE))
 res <- rma(yi, vi, method="EE", data=dat)
 res
 
+# double-check the computation of the estimate
+with(dat, sum(1/vi * yi) / sum(1/vi))
+
 # or round results to 2 digits
 print(res, digits=2)
 
@@ -94,8 +97,7 @@ res <- rma(yi, vi, method="DL", data=dat)
 res
 
 # fit random-effects model (the default is to use REML estimation)
-res <- rma(yi, vi, data=dat)
-res
+rma(yi, vi, data=dat)
 
 # or round results to 2 digits
 print(res, digits=2)
@@ -177,10 +179,13 @@ regplot(res, mod="year", xlab="Publication Year")
 dat$random <- ifelse(dat$alloc=="random", 1, 0)
 
 # subgrouping based on the 'random' dummy variable
-res <- rma(yi, vi, method="DL", subset=c(random==0), data=dat)
-res
-res <- rma(yi, vi, method="DL", subset=c(random==1), data=dat)
-res
+res0 <- rma(yi, vi, method="DL", subset=c(random==0), data=dat)
+res0
+res1 <- rma(yi, vi, method="DL", subset=c(random==1), data=dat)
+res1
+
+# test whether the two coefficients differ from each other
+rma(c(coef(res0), coef(res1)), c(vcov(res0), vcov(res1)), mods = c(0,1), method="FE")
 
 # mixed-effects meta-regression model with dummy variable
 res <- rma(yi, vi, mods = ~ random, method="DL", data=dat)
@@ -214,6 +219,9 @@ predict(res, newmods=c(1,0), digits=2, transf=exp)
 
 # predicted average risk ratio for 'systematic'
 predict(res, newmods=c(0,1), digits=2, transf=exp)
+
+# for more details on this, see:
+# https://www.metafor-project.org/doku.php/tips:comp_two_independent_estimates
 
 ############################################################################
 
