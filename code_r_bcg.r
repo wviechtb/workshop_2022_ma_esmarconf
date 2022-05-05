@@ -111,7 +111,7 @@ forest(res)
 # a nicer forest plot
 res <- rma(yi, vi, data=dat, slab=paste(author, year, sep=", "))
 forest(res, xlim=c(-16,6), header="Author(s) and Year", addpred=TRUE,
-       ilab=cbind(dat$tpos, dat$tneg, dat$cpos, dat$cneg),
+       ilab=cbind(tpos, tneg, cpos, cneg),
        ilab.xpos=c(-9.5,-8,-6,-4.5), cex=.90)
 par(cex=.90, font=2)
 text(c(-9.5,-8,-6,-4.5), 15, c("TB+", "TB-", "TB+", "TB-"))
@@ -121,7 +121,7 @@ text(c(-8.75,-5.25),     16, c("Vaccinated", "Control"))
 res <- rma(yi, vi, data=dat, slab=paste(author, year, sep=", "))
 forest(res, xlim=c(-16,6), atransf=exp, at=log(c(.05,.25,1,4)),
        header="Author(s) and Year", addpred=TRUE,
-       ilab=cbind(dat$tpos, dat$tneg, dat$cpos, dat$cneg),
+       ilab=cbind(tpos, tneg, cpos, cneg),
        ilab.xpos=c(-9.5,-8,-6,-4.5), cex=.90)
 par(cex=.90, font=2)
 text(c(-9.5,-8,-6,-4.5), 15, c("TB+", "TB-", "TB+", "TB-"))
