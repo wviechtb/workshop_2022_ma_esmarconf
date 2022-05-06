@@ -206,3 +206,81 @@ regplot(res, xlab="Year of Publication", las=1, digits=1, bty="l", psize="seinv"
 cor.test(dat$ri, dat$year)
 
 ############################################################################
+
+# note: wait with this part until we have talked about publication bias
+
+# meta-analysis of studies examining the risk of lung cancer due to
+# environmental tobacco smoke (ETS) exposure
+#
+# source: Hackshaw, A. K., Law, M. R., & Wald, N. J. (1997). The accumulated
+# evidence on lung cancer and environmental tobacco smoke. British Medical
+# Journal, 315(7114), 980–988. https://doi.org/10.1136/bmj.315.7114.980
+# https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2127653/
+#
+# see also: Hackshaw, A. K. (1998). Lung cancer and passive smoking.
+# Statistical Methods in Medical Research, 7(2), 119–136.
+# https://doi.org/10.1177/096228029800700203
+#
+# one of the included studies: Fontham, E. T., Correa, P., Reynolds, P.,
+# Wu-Williams, A., Buffler, P. A., Greenberg, R. S., Chen, V. W., Alterman,
+# T., Boyd, P., Austin, D. F., & Liff, J. (1994). Environmental tobacco smoke
+# and lung cancer in nonsmoking women: A multicenter study. Journal of the
+# American Medical Association, 271(22), 1752-1759.
+# https://doi.org/10.1001/jama.1994.03510460044031
+#
+# note: this meta-analysis was conducted with log odds ratios (and the values
+# are already included in the dataset); in this particular example, you can
+# think of these values as more or less the same as log risk ratios (but
+# that's not true in general!); the log odds ratios were computed so that
+# values greater than 0 indicate an increased risk of cancer in exposed women
+# compared to women not exposed to ETS from their spouse
+
+# for a description of the dataset, see:
+help(dat.hackshaw1998)
+
+# copy data to 'dat'
+dat <- dat.hackshaw1998
+dat
+
+# fit a random-effects model
+res <- rma(yi, vi, data=dat)
+res
+
+# compute the estimated average true odds ratio, 95% CI, and 95% PI
+predict(res, transf=exp, digits=2)
+
+# examine the funnel plot for these data; does the plot suggest that some
+# studies may be missing? if so, what kinds of studies? (i.e., what kinds of
+# effects would those missing studies show?)
+funnel(res)
+
+# conduct a failsafe-N analysis; what do the results suggest?
+fsn(yi, vi, data=dat)
+
+# conduct the regression test for funnel plot asymmetry; does the test suggest
+# that there may be an association between the standard errors of the studies
+# and the observed effects?
+regtest(res)
+
+# apply the trim and fill method; does the method suggest that some studies
+# may be missing (and on which side)? if so (i.e., after their imputation),
+# what happens to the estimated effect?
+taf <- trimfill(res)
+taf
+
+# draw a funnel plot with the 'filled-in' studies added
+funnel(taf)
+
+# apply the PET and PEESE methods; what are the estimated effects according to
+# these methods?
+regtest(res)
+regtest(res, predictor="vi")
+
+# fit a 'logistic' selection model (think about the possible direction of the
+# selection; what should the 'alternative' argument be set to?); does the
+# model suggest a possible selection effect?
+sel <- selmodel(res, type="logistic", alternative="greater")
+sel
+plot(sel)
+
+############################################################################
