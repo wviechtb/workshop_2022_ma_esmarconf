@@ -284,3 +284,120 @@ sel
 plot(sel)
 
 ############################################################################
+
+# note: wait with this part until we have talked about multilevel /
+# multivariate models
+
+# back to the meta-analysis by Crede et al. (2010) on the relationship between
+# class attendance and performance (i.e., the grade) within the class
+
+# copy data to 'dat'
+dat <- dat.crede2010
+dat <- escalc(measure="ZCOR", ri=ri, ni=ni, data=dat, subset=criterion=="grade")
+dat
+
+# note: some studies included multiple samples; the different samples within
+# studies presumably included different subjects and hence the sampling errors
+# of the (r-to-z transformed) correlation coefficients can be assumed to be
+# independent, but the underlying true outcomes might be correlated
+
+# fit a standard random-effects model
+res <- rma(yi, vi, data=dat)
+res
+
+# fit a multilevel model with random effects for studies and samples within studies
+res <- rma.mv(yi, vi, random = ~ 1 | studyid/sampleid, data=dat)
+res
+
+# which one is the larger source of heterogeneity? differences between studies
+# or differences in the outcomes within studies? and what is the estimated
+# correlation between the true outcomes of different samples within the same
+# study?
+round(res$sigma2[1] / sum(res$sigma2), digits=4)
+
+# the variance component for between-study heterogeneity is the larger one
+# (0.0376 vs 0.0159); the estimated correlation between the true outcomes
+# within studies is 0.70
+
+# fit the same model using the multivariate parameterization
+res <- rma.mv(yi, vi, random = ~ sampleid | studyid, data=dat)
+res
+
+# LRT comparing a standard RE model with the multilevel model
+dat$id <- 1:nrow(dat)
+res0 <- rma.mv(yi, vi, random = ~ 1 | id, data=dat)
+res1 <- rma.mv(yi, vi, random = ~ 1 | studyid/sampleid, data=dat)
+anova(res0, res1)
+
+# meta-analysis on the difference between schizophrenia patients and healthy
+# controls with respect to their performance on the tower of London test
+# (https://en.wikipedia.org/wiki/Tower_of_London_test), a cognitive tasks
+# measuring planning ability
+#
+# source: Knapp, F., Viechtbauer, W., Leonhart, R., Nitschke, K., & Kaller, C.
+# P. (2017). Planning performance in schizophrenia patients: A meta-analysis
+# of the influence of task difficulty and clinical and sociodemographic
+# variables. Psychological Medicine, 47(11), 2002-2016.
+# https://doi.org/10.1017/S0033291717000459
+#
+# note: this meta-analysis was conducted with standardized mean differences
+# (the values are already included in the dataset); positive values indicate
+# better performance by healthy controls compared to schizophrenia patients
+
+# for a description of the dataset, see:
+help(dat.knapp2017)
+
+# copy data to 'dat'
+dat <- dat.knapp2017
+dat
+
+# note: this is a more complex dataset
+#
+# 1. studies 2, 3, 9, and 20 included more than one schizophrenia patient
+#    group and the standardized mean differences were computed by comparing
+#    these groups against a single healthy control group
+# 2. studies 6, 12, 14, 15, 18, 19, 22, and 26 had the patients and controls
+#    complete different tasks of varying complexity (essentially the average
+#    number of moves required to complete a task); study 6 also included two
+#    different task types
+# 3. study 24 provides two standardized mean differences, one for men and the
+#    other for women
+# 4. study 29 provides three standardized mean differences, corresponding to
+#    the three different COMT Val158Met genotypes (val/val, val/met, met/met)
+
+# all 4 issues described above lead to a multilevel structure in the dataset,
+# with multiple standardized mean differences nested within some of the studies;
+# issues 1. and 2. also lead to correlated sampling errors
+
+# fit a standard random-effects model ignoring these issues
+res <- rma(yi, vi, data=dat)
+res
+
+# fit a multilevel model with random effects for studies (variable 'study')
+# and comparisons within studies (variable 'comp')
+res <- rma.mv(yi, vi, random = ~ 1 | study/comp, data=dat)
+res
+
+# construct an approximate V matrix assuming a correlation of 0.4 for sampling
+# errors of different comparisons within the same study
+V <- vcalc(vi, cluster=study, obs=comp, data=dat, rho=0.4)
+
+# fit again the same multilevel model, but now use the V matrix in the model
+res <- rma.mv(yi, V, random = ~ 1 | study/comp, data=dat)
+res
+
+# use cluster-robust inference methods based on this model
+robust(res, cluster=dat$study)
+robust(res, cluster=dat$study, clubSandwich=TRUE)
+
+# examine if task difficulty is a potential moderator of the effect
+res <- rma.mv(yi, V, mods = ~ difficulty, random = ~ 1 | study/comp, data=dat)
+res
+robust(res, cluster=dat$study, clubSandwich=TRUE)
+
+# draw bubble plot (CI for regression line based on the robust() results)
+sav <- robust(res, cluster=dat$study, clubSandwich=TRUE)
+regplot(sav, xlab="Task Difficulty", ylab="Standardized Mean Difference",
+        las=1, digits=1, bty="l")
+
+############################################################################
