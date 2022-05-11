@@ -1,5 +1,14 @@
 ############################################################################
 
+# materials from the "Meta-Analysis with R" workshop given by Wolfgang
+# Viechtbauer on February 21 (with a follow-up session on May 6), 2022, as
+# part of the 2022 "Evidence Synthesis & Meta-Analysis in R Conference"
+#
+# workshop details: https://www.wvbauer.com/doku.php/workshop_ma_esmarconf
+# author details:   https://www.wvbauer.com/
+
+############################################################################
+
 # meta-analysis on the effectiveness of intravenous magnesium treatment in acute
 # myocardial infarction for reducing the risk of mortality and arrhythmias
 
